@@ -1,38 +1,31 @@
-import { View, Text, FlatList, StyleSheet } from "react-native";
-import { useSessions } from "@tt-platform/shared";
+import { StyleSheet } from 'react-native';
 
-export default function SessionsScreen() {
-  const { sessions, loading } = useSessions();
+import EditScreenInfo from '@/components/EditScreenInfo';
+import { Text, View } from '@/components/Themed';
 
-  if (loading) return <View style={styles.center}><Text>Loading...</Text></View>;
-
+export default function TabOneScreen() {
   return (
     <View style={styles.container}>
-      <FlatList
-        data={sessions}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardSub}>{item.description}</Text>
-          </View>
-        )}
-        contentContainerStyle={{ gap: 12 }}
-      />
+      <Text style={styles.title}>Tab One</Text>
+      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+      <EditScreenInfo path="app/(tabs)/index.tsx" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  card: {
-    backgroundColor: "#f8fafc",
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  cardTitle: { fontSize: 16, fontWeight: "600" },
-  cardSub: { color: "#64748b", marginTop: 4 },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  separator: {
+    marginVertical: 30,
+    height: 1,
+    width: '80%',
+  },
 });

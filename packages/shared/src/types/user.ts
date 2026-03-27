@@ -1,10 +1,10 @@
 export interface UserProfile {
   uid: string;
   email: string;
-  displayName: string;
-  photoURL?: string;
-  favoriteSessionIds: string[];
-  completedSessionIds: string[];
+  displayName: string | null;
+  photoURL: string | null;
+  subscriptionStatus: 'free' | 'premium' | 'canceled';
+  favoriteSessions: string[];
   createdAt: Date;
   updatedAt: Date;
 }

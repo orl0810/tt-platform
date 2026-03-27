@@ -15,7 +15,8 @@ export const SUBSCRIPTION_PLANS = {
 export const SESSION_LEVELS = ["beginner", "intermediate", "advanced"] as const;
 export const SESSION_CATEGORIES = ["strength", "cardio", "flexibility", "technique"] as const;
 
+let process = {};
 export const STRIPE_PRICES = {
-  MONTHLY: process.env.VITE_STRIPE_PRICE_MONTHLY ?? process.env.EXPO_PUBLIC_STRIPE_PRICE_MONTHLY ?? "",
-  ANNUAL: process.env.VITE_STRIPE_PRICE_ANNUAL ?? process.env.EXPO_PUBLIC_STRIPE_PRICE_ANNUAL ?? "",
+  MONTHLY: 5,
+  ANNUAL: 50,
 } as const;

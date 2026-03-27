@@ -1,0 +1,693 @@
+# TT Platform - Cursor AI Rules & Architecture Guidelines
+
+## 🎯 Project Overview
+**TT Platform** is a cross-platform fitness training application built as a monorepo using:
+- **Web**: React 18 + Vite + React Router v6
+- **Mobile**: Expo (React Native) + Expo Router
+- **Shared Logic**: Unified Firebase services, hooks, and TypeScript types
+- **Backend**: Firebase (Auth, Firestore, Storage) + Cloud Functions + Stripe
+
+**Primary Goal**: Deliver a seamless, premium user experience across web and native mobile with shared business logic, minimal code duplication, and scalable architecture.
+
+---
+
+## 📐 Architecture Principles
+
+### 1. **Monorepo Structure (Turborepo + pnpm)**
+- **Root**: Configuration files only (`turbo.json`, `pnpm-workspace.yaml`)
+- **apps/**: Platform-specific applications (web, mobile)
+- **packages/**: Shared code (`@tt-platform/shared`, `@tt-platform/ui`)
+- **functions/**: Firebase Cloud Functions for backend logic
+
+**Rule**: NEVER duplicate business logic between web and mobile. Always extract to `packages/shared`.
+
+### 2. **Separation of Concerns**
+```
+packages/shared/       → Core logic (Firebase, hooks, types, utils)
+packages/ui/           → Presentation components (platform-agnostic where possible)
+apps/web/              → Web-specific routing, SEO, styles
+apps/mobile/           → Mobile-specific navigation, native features
+```
+
+### 3. **Single Source of Truth**
+- **Types**: Defined in `packages/shared/src/types/`
+- **Services**: Firebase interactions in `packages/shared/src/services/`
+- **Hooks**: Reusable stateful logic in `packages/shared/src/hooks/`
+- **Constants**: App-wide config in `packages/shared/src/constants/`
+
+---
+
+## 🛠️ Technology Stack
+
+### Core Dependencies
+| Layer | Technology | Version | Purpose |
+|-------|-----------|---------|---------|
+| **Build Tool** | Turborepo | ^2.0 | Monorepo orchestration |
+| **Package Manager** | pnpm | ^9.0 | Fast, disk-efficient installs |
+| **Web Framework** | React 18 + Vite | ^18.3 / ^5.2 | Web app with HMR |
+| **Mobile Framework** | Expo SDK | ~51.0 | Native mobile development |
+| **Routing (Web)** | React Router v6 | ^6.23 | Client-side routing |
+| **Routing (Mobile)** | Expo Router | ~3.5 | File-based routing |
+| **Backend** | Firebase | ^10.12 | Auth, Firestore, Storage |
+| **Payments** | Stripe | ^15.0 | Subscription management |
+| **Language** | TypeScript | ^5.4 | Type safety across stack |
+
+### Key Libraries
+- **State Management**: React Context API + Custom Hooks (no Redux/Zustand needed yet)
+- **Form Handling**: Native `useState` (consider `react-hook-form` for complex forms)
+- **Data Fetching**: Custom Firebase hooks (no React Query needed)
+- **Styling (Web)**: Plain CSS with CSS variables
+- **Styling (Mobile)**: React Native StyleSheet API
+
+---
+
+## 📝 Code Style & Conventions
+
+### TypeScript Guidelines
+
+#### Strict Type Safety
+```typescript
+// ✅ GOOD: Explicit types for function parameters
+export function formatDuration(minutes: number): string {
+  return `${minutes}m`;
+}
+
+// ❌ BAD: Implicit 'any'
+export function formatDuration(minutes) {
+  return `${minutes}m`;
+}
+```
+
+#### Prefer Interfaces for Objects
+```typescript
+// ✅ GOOD: Interface for data structures
+export interface Session {
+  id: string;
+  title: string;
+  duration: number;
+}
+
+// ❌ BAD: Using 'type' for simple objects (reserve for unions/intersections)
+export type Session = {
+  id: string;
+  title: string;
+};
+```
+
+#### Use Enums or Union Types for Constants
+```typescript
+// ✅ GOOD: Explicit union type
+export type SessionLevel = "beginner" | "intermediate" | "advanced";
+
+// ✅ ALSO GOOD: Const object with 'as const'
+export const SESSION_LEVELS = {
+  BEGINNER: "beginner",
+  INTERMEDIATE: "intermediate",
+  ADVANCED: "advanced",
+} as const;
+```
+
+### Naming Conventions
+
+| Type | Convention | Example |
+|------|-----------|---------|
+| **Components** | PascalCase | `SessionCard`, `ExercisePlayer` |
+| **Hooks** | camelCase with `use` prefix | `useAuth`, `useSessions` |
+| **Services** | camelCase with `Service` suffix | `authService`, `sessionService` |
+| **Types/Interfaces** | PascalCase | `Session`, `UserProfile` |
+| **Constants** | UPPER_SNAKE_CASE | `API_URL`, `MAX_RETRIES` |
+| **Files** | Match export name | `SessionCard.tsx`, `useAuth.ts` |
+
+### Component Structure
+
+#### Functional Components (Preferred)
+```typescript
+// ✅ GOOD: Named function export
+export default function SessionCard({ session }: SessionCardProps) {
+  return <div>{session.title}</div>;
+}
+
+// ❌ BAD: Arrow function default export (harder to debug)
+export default ({ session }) => <div>{session.title}</div>;
+```
+
+#### Props Interface Pattern
+```typescript
+// ✅ GOOD: Explicit props interface
+interface SessionCardProps {
+  session: Session;
+  onPress?: (session: Session) => void;
+  isFavorite?: boolean;
+}
+
+export function SessionCard({ session, onPress, isFavorite = false }: SessionCardProps) {
+  // ...
+}
+```
+
+---
+
+## 🗂️ File Organization
+
+### Component File Structure
+```
+ComponentName/
+├── index.tsx           # Main component export
+├── ComponentName.tsx   # Implementation (if complex)
+├── styles.ts           # Styles (mobile) or styles.css (web)
+├── types.ts            # Local type definitions
+└── utils.ts            # Component-specific utilities
+```
+
+### Service File Structure
+```typescript
+// packages/shared/src/services/sessionService.ts
+import { db } from "./firebase";
+import type { Session } from "../types/session";
+
+export const sessionService = {
+  async getAll(): Promise<Session[]> { /* ... */ },
+  async getById(id: string): Promise<Session | null> { /* ... */ },
+  async create(data: Partial<Session>): Promise<Session> { /* ... */ },
+};
+```
+
+### Hook File Structure
+```typescript
+// packages/shared/src/hooks/useSessions.ts
+import { useEffect, useState } from "react";
+import { sessionService } from "../services/sessionService";
+import type { Session } from "../types/session";
+
+export function useSessions() {
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    sessionService.getAll()
+      .then(setSessions)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return { sessions, loading, error };
+}
+```
+
+---
+
+## 🎨 UI Component Guidelines
+
+### Platform-Agnostic Components (packages/ui)
+
+**Goal**: Components should work on both web and mobile with minimal platform-specific code.
+
+```typescript
+// ✅ GOOD: Conditional rendering for platform differences
+import { Platform } from "react-native";
+
+export function SessionCard({ session }: Props) {
+  const Wrapper = Platform.OS === "web" ? "div" : View;
+  
+  return (
+    <Wrapper>
+      <Text>{session.title}</Text>
+    </Wrapper>
+  );
+}
+```
+
+### Styling Strategy
+
+**Web (apps/web)**:
+```css
+/* Use CSS variables for theming */
+:root {
+  --color-primary: #6366f1;
+  --spacing-md: 1rem;
+}
+
+.session-card {
+  padding: var(--spacing-md);
+  background: var(--color-primary);
+}
+```
+
+**Mobile (apps/mobile)**:
+```typescript
+// Use StyleSheet.create for performance
+import { StyleSheet } from "react-native";
+
+const styles = StyleSheet.create({
+  card: {
+    padding: 16,
+    backgroundColor: "#6366f1",
+  },
+});
+```
+
+---
+
+## 🔥 Firebase Integration Patterns
+
+### Service Layer Pattern
+
+**Always wrap Firebase calls in services**:
+
+```typescript
+// ✅ GOOD: Centralized service
+export const authService = {
+  async signIn(email: string, password: string) {
+    const { user } = await signInWithEmailAndPassword(auth, email, password);
+    return user;
+  },
+};
+
+// Usage in component:
+const handleLogin = async () => {
+  await authService.signIn(email, password);
+};
+```
+
+```typescript
+// ❌ BAD: Direct Firebase calls in components
+import { signInWithEmailAndPassword } from "firebase/auth";
+
+const handleLogin = async () => {
+  await signInWithEmailAndPassword(auth, email, password);
+};
+```
+
+### Firestore Data Transformation
+
+```typescript
+// ✅ GOOD: Transform Firestore data to app types
+const toSession = (doc: DocumentSnapshot): Session => ({
+  id: doc.id,
+  ...doc.data(),
+  createdAt: doc.data()?.createdAt?.toDate() ?? new Date(),
+});
+
+export const sessionService = {
+  async getAll(): Promise<Session[]> {
+    const snap = await getDocs(collection(db, "sessions"));
+    return snap.docs.map(toSession);
+  },
+};
+```
+
+### Real-time Listeners Pattern
+
+```typescript
+// ✅ GOOD: Cleanup listeners in useEffect
+export function useFavorites(userId: string | undefined) {
+  const [favorites, setFavorites] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const unsubscribe = onSnapshot(
+      doc(db, "users", userId),
+      (snap) => setFavorites(snap.data()?.favorites ?? [])
+    );
+
+    return unsubscribe; // Cleanup on unmount
+  }, [userId]);
+
+  return favorites;
+}
+```
+
+---
+
+## 🧪 Testing Guidelines
+
+### Test File Naming
+```
+ComponentName.tsx
+ComponentName.test.tsx   // Unit tests
+ComponentName.spec.tsx   // Integration tests
+```
+
+### Testing Library Preferences
+- **Web**: `@testing-library/react` + Vitest
+- **Mobile**: `@testing-library/react-native` + Jest
+- **E2E**: Playwright (web) / Detox (mobile)
+
+### Test Coverage Goals
+| Layer | Target | Priority |
+|-------|--------|----------|
+| Services | 90%+ | Critical |
+| Hooks | 80%+ | High |
+| Utils | 95%+ | High |
+| Components | 60%+ | Medium |
+
+---
+
+## 🔒 Security Best Practices
+
+### Environment Variables
+
+**Web (.env)**:
+```bash
+VITE_FIREBASE_API_KEY=xxx
+VITE_STRIPE_PUBLISHABLE_KEY=xxx
+```
+
+**Mobile (app.json extra)**:
+```json
+{
+  "expo": {
+    "extra": {
+      "firebaseApiKey": process.env.EXPO_PUBLIC_FIREBASE_API_KEY
+    }
+  }
+}
+```
+
+### Firestore Security Rules
+```javascript
+// firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only read/write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Sessions are public read, admin write
+    match /sessions/{sessionId} {
+      allow read: if true;
+      allow write: if request.auth.token.admin == true;
+    }
+    
+    // Subscriptions are private
+    match /subscriptions/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // Only Cloud Functions can write
+    }
+  }
+}
+```
+
+### API Key Protection
+
+```typescript
+// ✅ GOOD: Check auth before calling sensitive operations
+export const createCheckoutSession = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be logged in");
+  }
+  // ... safe to proceed
+});
+```
+
+---
+
+## 🚀 Performance Optimization
+
+### Code Splitting (Web)
+
+```typescript
+// ✅ GOOD: Lazy load routes
+import { lazy, Suspense } from "react";
+
+const SessionsPage = lazy(() => import("./routes/sessions/SessionsPage"));
+
+function App() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <Routes>
+        <Route path="/sessions" element={<SessionsPage />} />
+      </Routes>
+    </Suspense>
+  );
+}
+```
+
+### Memoization
+
+```typescript
+// ✅ GOOD: Memoize expensive computations
+const filteredSessions = useMemo(
+  () => sessions.filter((s) => s.level === selectedLevel),
+  [sessions, selectedLevel]
+);
+
+// ✅ GOOD: Memoize callbacks passed to children
+const handlePress = useCallback(
+  (session: Session) => navigate(`/sessions/${session.id}`),
+  [navigate]
+);
+```
+
+### Image Optimization
+
+**Web**:
+```typescript
+// Use modern formats with fallbacks
+<picture>
+  <source srcSet="image.avif" type="image/avif" />
+  <source srcSet="image.webp" type="image/webp" />
+  <img src="image.jpg" alt="..." loading="lazy" />
+</picture>
+```
+
+**Mobile**:
+```typescript
+import { Image } from "expo-image";
+
+// Use expo-image for caching and blurhash
+<Image
+  source={{ uri: session.thumbnailUrl }}
+  placeholder={{ blurhash: session.blurhash }}
+  contentFit="cover"
+  transition={200}
+/>
+```
+
+---
+
+## 🎯 Common Patterns
+
+### Loading States
+```typescript
+// ✅ GOOD: Consistent loading pattern
+export function useSessions() {
+  const [data, setData] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    sessionService.getAll()
+      .then(setData)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, []);
+
+  return { data, loading, error };
+}
+```
+
+### Error Boundaries
+```typescript
+// apps/web/src/components/ErrorBoundary.tsx
+import { Component, ReactNode } from "react";
+
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+export class ErrorBoundary extends Component<Props, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error("ErrorBoundary caught:", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback ?? <h1>Something went wrong.</h1>;
+    }
+    return this.props.children;
+  }
+}
+```
+
+### Protected Routes (Web)
+```typescript
+function PrivateRoute({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+  
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/auth/login" replace />;
+  
+  return <>{children}</>;
+}
+```
+
+### Protected Screens (Mobile)
+```typescript
+// app/_layout.tsx
+import { useAuth } from "@tt-platform/shared";
+import { Redirect } from "expo-router";
+
+export default function RootLayout() {
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Redirect href="/(auth)/login" />;
+
+  return <Stack />;
+}
+```
+
+---
+
+## 🚫 Anti-Patterns to Avoid
+
+### ❌ Don't Duplicate Logic
+```typescript
+// ❌ BAD: Separate implementations
+// apps/web/src/hooks/useSessions.ts
+export function useSessions() { /* web-specific */ }
+
+// apps/mobile/src/hooks/useSessions.ts
+export function useSessions() { /* mobile-specific */ }
+
+// ✅ GOOD: Single shared hook
+// packages/shared/src/hooks/useSessions.ts
+export function useSessions() { /* works everywhere */ }
+```
+
+### ❌ Don't Mix Concerns
+```typescript
+// ❌ BAD: Business logic in component
+function SessionCard({ session }) {
+  const [data, setData] = useState(null);
+  
+  useEffect(() => {
+    // Firebase call directly in component
+    getDoc(doc(db, "sessions", session.id)).then(setData);
+  }, [session.id]);
+  
+  return <div>{data?.title}</div>;
+}
+
+// ✅ GOOD: Logic in hook/service
+function SessionCard({ session }) {
+  const { data } = useSessionDetails(session.id);
+  return <div>{data?.title}</div>;
+}
+```
+
+### ❌ Don't Ignore TypeScript Errors
+```typescript
+// ❌ BAD: Using 'any' or '@ts-ignore'
+function processSession(session: any) {
+  return session.title; // No type safety
+}
+
+// ✅ GOOD: Proper typing
+function processSession(session: Session): string {
+  return session.title;
+}
+```
+
+---
+
+## 🤖 AI Assistant Instructions
+
+### When Generating Code
+
+1. **Always use TypeScript** with explicit types
+2. **Follow the established patterns** in `packages/shared`
+3. **Prioritize reusability** - extract to shared package if used >1 place
+4. **Include error handling** in all async operations
+5. **Add loading states** for data fetching
+6. **Use proper imports** from workspace packages (`@tt-platform/*`)
+7. **Follow naming conventions** strictly
+8. **Add JSDoc comments** for complex functions
+9. **Consider both web and mobile** when creating UI components
+10. **Never hardcode secrets** - use environment variables
+
+### When Refactoring
+
+1. **Maintain backward compatibility** unless explicitly breaking
+2. **Update all usages** across web and mobile
+3. **Update types** if data structures change
+4. **Run type checks** (`pnpm type-check`) after changes
+5. **Test both platforms** if touching shared code
+
+### When Debugging
+
+1. **Check Firebase Console** for backend errors
+2. **Verify environment variables** are set correctly
+3. **Check Firestore Security Rules** if permission errors
+4. **Use React DevTools** for component debugging
+5. **Check network tab** for API failures
+
+---
+
+## 📚 Key Commands
+
+```bash
+# Development
+pnpm dev                              # Start all dev servers
+pnpm --filter @tt-platform/web dev    # Web only
+pnpm --filter @tt-platform/mobile start # Mobile only
+
+# Build
+pnpm build                            # Build all packages
+pnpm type-check                       # Type check all packages
+
+# Testing
+pnpm test                             # Run all tests
+pnpm --filter @tt-platform/shared test # Test shared package
+
+# Firebase
+cd functions && pnpm deploy           # Deploy Cloud Functions
+firebase emulators:start              # Local Firebase emulators
+
+# Mobile
+pnpm --filter @tt-platform/mobile android  # Run on Android
+pnpm --filter @tt-platform/mobile ios      # Run on iOS
+eas build -p android                  # Production build (Android)
+```
+
+---
+
+## 🎓 Learning Resources
+
+- [Turborepo Handbook](https://turbo.build/repo/docs/handbook)
+- [Expo Router Documentation](https://docs.expo.dev/router/introduction/)
+- [Firebase Best Practices](https://firebase.google.com/docs/firestore/best-practices)
+- [React Native Performance](https://reactnative.dev/docs/performance)
+- [Stripe Integration Guide](https://stripe.com/docs/payments/checkout)
+
+---
+
+## 📋 Pre-Commit Checklist
+
+Before committing code, ensure:
+
+- [ ] TypeScript compiles with no errors (`pnpm type-check`)
+- [ ] Code follows naming conventions
+- [ ] No hardcoded secrets or API keys
+- [ ] New services/hooks are exported from `packages/shared/src/index.ts`
+- [ ] Components work on both web and mobile (if in `packages/ui`)
+- [ ] Error handling is implemented for async operations
+- [ ] Loading states are shown during data fetching
+- [ ] Firebase security rules are updated if data structure changed
+
+---
+
+**Last Updated**: 2026-03-26
+**Version**: 1.0.0

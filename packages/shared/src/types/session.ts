@@ -1,29 +1,26 @@
-export type SessionLevel = "beginner" | "intermediate" | "advanced";
+export type SessionLevel = 'beginner' | 'intermediate' | 'advanced';
 export type SessionCategory = "strength" | "cardio" | "flexibility" | "technique";
 
 export interface Exercise {
-  id: string;
-  name: string;
-  description: string;
-  durationSeconds: number;
-  videoUrl?: string;
-  thumbnailUrl?: string;
-  reps?: number;
-  sets?: number;
+    id: string;
+    title: string;
+    description: string;
+    videoUrl: string;
+    thumbnailUrl: string;
+    durationSeconds: number;
+    order: number;
 }
 
 export interface Session {
-  id: string;
- string;
-  description: string;
-  thumbnailUrl?: string;
-  videoUrl?: string;
-  durationMinutes: number;
-  level: SessionLevel;
-  category: SessionCategory;
-  exercises: Exercise[];
-  isPremium: boolean;
-  tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
+    id: string;
+    title: string;
+    description: string;
+    level: SessionLevel;
+    objective: string;
+    durationMinutes: number;
+    isPremium: boolean;
+    exercises: Exercise[];
+    tags: string[];
+    thumbnailUrl: string;
+    createdAt: Date;
 }

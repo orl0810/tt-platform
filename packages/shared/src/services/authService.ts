@@ -7,34 +7,40 @@ import {
   User,
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import type { FirebaseDeps } from "../services/firebaseTypes";
 
-export const authService = {
-  async signUp(email: string, password: string, displayName: string): Promise<User> {
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(user, { displayName });
-    await setDoc(doc(db, "users", user.uid), {
-      uid: user.uid,
-      email,
-      displayName,
-      favoriteSessionIds: [],
-      completedSessionIds: [],
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    return user;
-  },
+// Factory function to create a service instance
+export function createAuthService({ auth, db }: FirebaseDeps) {
+  return {
+    async signUp(email: string, password: string, displayName: string): Promise<User> {
+      const { user } = await createUserWithEmailAndPassword(auth, email, password);
 
-  async signIn(email: string, password: string): Promise<User> {
-    const { user } = await signInWithEmailAndPassword(auth, email, password);
-    return user;
-  },
+      await updateProfile(user, { displayName });
 
-  async signOut(): Promise<void> {
-    await firebaseSignOut(auth);
-  },
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email,
+        displayName,
+        favoriteSessionIds: [],
+        completedSessionIds: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
 
-  onAuthStateChanged(callback: (user: User | null) => void) {
-    return onAuthStateChanged(auth, callback);
-  },
-};
+      return user;
+    },
+
+    async signIn(email: string, password: string): Promise<User> {
+      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      return user;
+    },
+
+    async signOut(): Promise<void> {
+      await firebaseSignOut(auth);
+    },
+
+    onAuthStateChanged(callback: (user: User | null) => void) {
+      return onAuthStateChanged(auth, callback);
+    },
+  };
+}

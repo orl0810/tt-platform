@@ -2,11 +2,17 @@
 export * from "./types/session";
 export * from "./types/user";
 export * from "./types/subscription";
+export * from "./config/env";
 
 // Services
-export { authService } from "./services/authService";
-export { sessionService } from "./services/sessionService";
-export { subscriptionService } from "./services/subscriptionService";
+export { createAuthService } from "./services/authService";
+export { createSessionService } from "./services/sessionService";
+export { createSubscriptionService } from "./services/subscriptionService";
+
+// Firebase (new)
+export { initFirebase } from "./services/firebase";
+export { FirebaseProvider, useFirebase } from "./context/FirebaseProvider";
+export type { FirebaseDeps } from "./services/firebaseTypes";
 
 // Hooks
 export { useAuth } from "./hooks/useAuth";
