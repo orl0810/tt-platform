@@ -2,7 +2,7 @@
 
 ## 🎯 Project Overview
 **TT Platform** is a cross-platform fitness training application built as a monorepo using:
-- **Web**: React 18 + Vite + React Router v6
+- **Web**: React 19 + Vite + React Router v6
 - **Mobile**: Expo (React Native) + Expo Router
 - **Shared Logic**: Unified Firebase services, hooks, and TypeScript types
 - **Backend**: Firebase (Auth, Firestore, Storage) + Cloud Functions + Stripe

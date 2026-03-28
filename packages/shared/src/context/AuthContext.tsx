@@ -1,8 +1,7 @@
-/*
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import type { User } from "firebase/auth";
-import { createAuthService } from "../services/authService";
-import {useFirebase} from "./FirebaseProvider";
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import type { User } from 'firebase/auth';
+import { createAuthService } from '../services/authService';
+import { useFirebase } from './FirebaseProvider';
 
 interface AuthContextValue {
   user: User | null;
@@ -19,8 +18,8 @@ const AuthContext = createContext<AuthContextValue>({
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const firebase = useFirebase();
-    const authService = createAuthService(firebase);
+  const firebase = useFirebase();
+  const authService = createAuthService(firebase);
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,26 +37,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-      <AuthContext.Provider
-          value={{
-            user,
-            loading,
-            signOut,
-            signIn: authService.signIn,
-            signUp: authService.signUp,
-          }}
-      >
-        {children}
-      </AuthContext.Provider>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        signOut,
+        signIn: authService.signIn,
+        signUp: authService.signUp,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 }
 
 export function useAuthContext() {
   return useContext(AuthContext);
 }
-*/
 
-
+/*
 // packages/shared/src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import {
@@ -176,3 +174,4 @@ export function useAuth(): AuthContextValue {
     if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
     return ctx;
 }
+*/

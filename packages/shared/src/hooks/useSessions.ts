@@ -1,8 +1,7 @@
-/*
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { createSessionService } from "../services/sessionService";
-import type { Session } from "../types/session";
-import {useFirebase} from "../context/FirebaseProvider";
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { createSessionService } from '../services/sessionService';
+import type { Session } from '../types/session';
+import { useFirebase } from '../context/FirebaseProvider';
 
 export function useSessions() {
   const firebase = useFirebase();
@@ -16,16 +15,16 @@ export function useSessions() {
     let cancelled = false;
 
     sessionService
-        .getAll()
-        .then((data) => {
-          if (!cancelled) setSessions(data);
-        })
-        .catch((err) => {
-          if (!cancelled) setError(err.message);
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
+      .getAll()
+      .then((data) => {
+        if (!cancelled) setSessions(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     return () => {
       cancelled = true;
@@ -33,16 +32,15 @@ export function useSessions() {
   }, [sessionService]);
 
   const getSessionById = useCallback(
-      (id: string) => sessions.find((s) => s.id === id) ?? null,
-      [sessions]
+    (id: string) => sessions.find((s) => s.id === id) ?? null,
+    [sessions]
   );
 
   return { sessions, loading, error, getSessionById };
 }
-*/
 
 // packages/shared/src/hooks/useSessions.ts
-import { useState, useEffect, useCallback, useMemo } from 'react';
+/* import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   collection, query, where, orderBy,
   getDocs, onSnapshot, QueryConstraint,
@@ -140,3 +138,4 @@ export function useSessions(): UseSessionsReturn {
     refetch: useCallback(() => setVersion((v) => v + 1), []),
   };
 }
+ */
