@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+/* import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -53,5 +53,35 @@ function RootLayoutNav() {
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
+  );
+}
+ */
+
+// apps/mobile/app/_layout.tsx
+import { useEffect } from 'react';
+import { Stack } from 'expo-router';
+import { initFirebase } from '@tt/shared';
+import { AppConfig } from '../src/config';
+
+export default function RootLayout() {
+  useEffect(() => {
+    // Initialize Firebase once at app startup
+    initFirebase({
+      firebase: AppConfig.firebase,
+      emulators: AppConfig.isDev
+        ? {
+            host: AppConfig.emulators.host,
+            authPort: AppConfig.emulators.authPort,
+            firestorePort: AppConfig.emulators.firestorePort,
+            storagePort: AppConfig.emulators.storagePort,
+          }
+        : null,
+    });
+  }, []);
+
+  return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
   );
 }
